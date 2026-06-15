@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Curso de Grading Pokémon TCG — Bruno / Criya</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0d0d0f;--paper:#f7f4ee;--gold:#c9a84c;--gold-lt:#e8d08a;
+  --smoke:#e2dfd8;--mid:#7a776e;--slab:#1a1a2e;--slab-lt:#2a2a4a;
+  --ruby:#9b2335;--gem:#2e7d32;--tag:#0a5c8a;--tag-lt:#e6f3fb;
+  --sidebar:260px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);font-size:15px;line-height:1.65;display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{
+  width:var(--sidebar);min-width:var(--sidebar);background:var(--slab);
+  position:fixed;top:0;left:0;height:100vh;overflow-y:auto;
+  display:flex;flex-direction:column;z-index:100;
+}
+.sidebar-logo{
+  padding:28px 20px 20px;border-bottom:1px solid rgba(201,168,76,.2);
+}
+.sidebar-logo .s-eyebrow{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--gold);margin-bottom:8px;
+}
+.sidebar-logo .s-title{
+  font-family:'Playfair Display',serif;font-size:18px;font-weight:700;
+  color:#f7f4ee;line-height:1.2;
+}
+.sidebar-progress{
+  padding:16px 20px;border-bottom:1px solid rgba(201,168,76,.1);
+}
+.prog-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:rgba(247,244,238,.4);margin-bottom:6px}
+.prog-bar{height:4px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;background:var(--gold);border-radius:99px;width:11%;transition:width .4s ease}
+.prog-text{font-size:11px;color:rgba(247,244,238,.5);margin-top:5px}
+.sidebar-nav{flex:1;padding:12px 0}
+.nav-section-label{
+  font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.2em;
+  text-transform:uppercase;color:rgba(201,168,76,.5);
+  padding:14px 20px 4px;
+}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 20px;cursor:pointer;
+  font-size:13px;color:rgba(247,244,238,.6);
+  transition:all .15s;border-left:2px solid transparent;
+  text-decoration:none;
+}
+.nav-item:hover{background:rgba(255,255,255,.05);color:rgba(247,244,238,.9)}
+.nav-item.active{
+  color:var(--gold);border-left-color:var(--gold);
+  background:rgba(201,168,76,.08);
+}
+.nav-item.done{color:rgba(100,200,120,.8)}
+.nav-item .nav-num{
+  font-family:'DM Mono',monospace;font-size:10px;
+  color:rgba(201,168,76,.5);min-width:18px;
+}
+.nav-item.active .nav-num{color:var(--gold)}
+.nav-item.done .nav-num{color:rgba(100,200,120,.6)}
+.nav-check{font-size:12px;margin-left:auto;opacity:0}
+.nav-item.done .nav-check{opacity:1;color:rgba(100,200,120,.8)}
+
+/* MAIN */
+.main{margin-left:var(--sidebar);flex:1;min-height:100vh}
+
+/* MODULE PANEL */
+.module{display:none;max-width:820px;margin:0 auto;padding:52px 48px 80px}
+.module.active{display:block}
+
+/* TYPOGRAPHY */
+.mod-eyebrow{
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--gold);margin-bottom:14px;display:block;
+}
+.mod-title{
+  font-family:'Playfair Display',serif;font-size:clamp(28px,4vw,42px);
+  font-weight:700;line-height:1.1;margin-bottom:16px;
+}
+.mod-lead{
+  font-size:16px;color:var(--mid);line-height:1.7;margin-bottom:36px;
+  border-bottom:1px solid var(--smoke);padding-bottom:36px;
+}
+h3.sub{
+  font-family:'Playfair Display',serif;font-size:20px;font-weight:700;
+  margin:32px 0 14px;
+}
+h4.mini{font-size:14px;font-weight:600;margin:20px 0 8px;color:var(--ink)}
+p{margin-bottom:14px;color:#2c2b28}
+p:last-child{margin-bottom:0}
+strong{font-weight:600}
+
+/* CARDS */
+.card{
+  background:#fff;border:1px solid var(--smoke);border-radius:10px;
+  padding:22px 24px;margin-bottom:16px;
+}
+.card-gold{border-color:rgba(201,168,76,.35);background:#fffdf5}
+
+/* METRIC GRID */
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:20px 0 28px}
+.metric-card{
+  background:var(--slab);color:#f7f4ee;
+  border-radius:10px;padding:18px 16px;
+}
+.metric-card .mc-icon{font-size:22px;margin-bottom:10px;color:var(--gold)}
+.metric-card .mc-name{font-size:15px;font-weight:600;margin-bottom:4px}
+.metric-card .mc-desc{font-size:12px;line-height:1.5;color:rgba(247,244,238,.65)}
+.metric-card .mc-tag{
+  display:inline-block;margin-top:10px;
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--gold);border:1px solid rgba(201,168,76,.4);padding:2px 7px;border-radius:3px;
+}
+
+/* GRADE TABLE */
+.gtable{width:100%;border-collapse:collapse;font-size:13px;margin:16px 0}
+.gtable th{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--mid);text-align:left;padding:8px 12px;
+  border-bottom:2px solid var(--ink);font-weight:500;
+}
+.gtable td{padding:10px 12px;border-bottom:1px solid var(--smoke);vertical-align:top}
+.gtable tr:last-child td{border-bottom:none}
+.gtable tr:hover td{background:#faf9f5}
+.g10{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;background:#e8f5e9;color:#1b5e20}
+.g9{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;background:#e3f2fd;color:#0d47a1}
+.g8{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;background:#fff8e1;color:#e65100}
+.g7{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;background:#fce4ec;color:#880e4f}
+.glo{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;background:#f0ece4;color:#5f5e5a}
+.gtag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;background:var(--tag-lt);color:var(--tag)}
+
+/* COMPANY CARDS */
+.company-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:20px 0}
+.company-card{border-radius:10px;padding:18px 16px;border:1px solid var(--smoke)}
+.company-card .cc-name{font-size:16px;font-weight:700;margin-bottom:6px}
+.company-card .cc-desc{font-size:12px;line-height:1.5;color:var(--mid);margin-bottom:8px}
+.company-card .cc-note{font-size:11px;font-weight:600;margin-top:8px}
+.cc-psa{border-left:4px solid #d32f2f;background:#fff8f8}
+.cc-psa .cc-name{color:#d32f2f}
+.cc-bgs{border-left:4px solid #1565c0;background:#f8fbff}
+.cc-bgs .cc-name{color:#1565c0}
+.cc-cgc{border-left:4px solid #2e7d32;background:#f8fdf8}
+.cc-cgc .cc-name{color:#2e7d32}
+.cc-tag{border-left:4px solid var(--tag);background:var(--tag-lt)}
+.cc-tag .cc-name{color:var(--tag)}
+
+/* TAG SPECIAL SECTION */
+.tag-hero{
+  background:var(--tag);color:#f7f4ee;
+  border-radius:12px;padding:28px;margin:24px 0;
+  position:relative;overflow:hidden;
+}
+.tag-hero::before{
+  content:'TAG';position:absolute;right:20px;top:10px;
+  font-family:'Playfair Display',serif;font-size:100px;font-weight:900;
+  color:rgba(255,255,255,.07);line-height:1;
+}
+.tag-hero .th-eyebrow{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:10px}
+.tag-hero .th-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:10px}
+.tag-hero .th-desc{font-size:13px;line-height:1.6;color:rgba(255,255,255,.8);position:relative}
+.tag-score-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:20px 0}
+.tag-score-card{
+  background:var(--tag-lt);border:1px solid rgba(10,92,138,.2);
+  border-radius:8px;padding:14px;
+}
+.tag-score-card .ts-score{font-family:'Playfair Display',serif;font-size:26px;font-weight:900;color:var(--tag);line-height:1}
+.tag-score-card .ts-grade{font-size:12px;font-weight:600;color:var(--tag);margin-top:2px}
+.tag-score-card .ts-name{font-size:11px;color:var(--mid);margin-top:4px}
+.tag-tier-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:20px 0}
+.tag-tier{border:1px solid var(--smoke);border-radius:8px;padding:16px}
+.tag-tier .tt-name{font-size:14px;font-weight:700;margin-bottom:4px;color:var(--tag)}
+.tag-tier .tt-price{font-family:'DM Mono',monospace;font-size:11px;color:var(--gold);margin-bottom:8px}
+.tag-tier .tt-items{font-size:12px;color:var(--mid);line-height:1.6}
+.tag-tier .tt-items li{list-style:none;padding-left:14px;position:relative;margin-bottom:3px}
+.tag-tier .tt-items li::before{content:'✓';position:absolute;left:0;color:var(--gem);font-size:10px}
+.tag-process{display:flex;flex-direction:column;gap:0;margin:20px 0}
+.tag-step{display:grid;grid-template-columns:36px 1fr;gap:0 16px;position:relative}
+.tag-step-left{display:flex;flex-direction:column;align-items:center}
+.tag-dot{
+  width:36px;height:36px;border-radius:50%;
+  background:var(--tag);color:#fff;
+  font-family:'DM Mono',monospace;font-size:11px;font-weight:500;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1;
+}
+.tag-line{width:1px;flex:1;background:rgba(10,92,138,.2);margin:4px 0;min-height:16px}
+.tag-step-right{padding-bottom:24px;padding-top:6px}
+.tag-step-right strong{display:block;font-size:14px;margin-bottom:4px;color:var(--tag)}
+.tag-step-right p{font-size:13px;color:var(--mid);margin:0;line-height:1.5}
+
+/* DEFECT GRID */
+.defect-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:20px 0}
+.defect-card{border:1px solid var(--smoke);border-radius:8px;overflow:hidden}
+.defect-viz{aspect-ratio:1;background:#1e2d5e;display:flex;align-items:center;justify-content:center}
+.defect-info{padding:10px}
+.defect-info strong{display:block;font-size:12px;margin-bottom:3px}
+.defect-info span{font-size:11px;color:var(--mid);line-height:1.4}
+
+/* VIDEO GRID */
+.video-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}
+.video-card{
+  border:1px solid var(--smoke);border-radius:8px;overflow:hidden;
+  text-decoration:none;display:block;transition:border-color .15s;
+}
+.video-card:hover{border-color:var(--gold)}
+.video-thumb{
+  aspect-ratio:16/9;background:var(--slab);
+  display:flex;align-items:center;justify-content:center;position:relative;
+}
+.play-btn{
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(201,168,76,.9);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;color:var(--slab);
+}
+.video-thumb .yt-label{
+  position:absolute;top:8px;left:8px;
+  background:rgba(255,0,0,.9);color:#fff;
+  font-size:9px;padding:2px 6px;border-radius:3px;
+  font-family:'DM Mono',monospace;letter-spacing:.05em;
+}
+.video-meta{padding:10px 12px}
+.video-meta .vm-title{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:3px;line-height:1.4}
+.video-meta .vm-ch{font-size:11px;color:var(--mid)}
+
+/* APP LIST */
+.app-item{
+  display:flex;gap:14px;align-items:flex-start;
+  padding:14px;border:1px solid var(--smoke);border-radius:8px;margin-bottom:10px;
+}
+.app-icon{
+  width:44px;height:44px;border-radius:10px;background:var(--slab);
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  flex-shrink:0;color:var(--gold);
+}
+.app-info .ai-name{font-size:14px;font-weight:600;margin-bottom:3px}
+.app-info .ai-desc{font-size:12px;color:var(--mid);line-height:1.5;margin-bottom:6px}
+.app-tags{display:flex;gap:5px;flex-wrap:wrap}
+.atag{font-size:10px;padding:2px 7px;border-radius:99px;background:var(--smoke);color:var(--mid)}
+.atag-free{background:#e8f5e9;color:#1b5e20}
+.atag-pay{background:#fff8e1;color:#e65100}
+.atag-web{background:#e3f2fd;color:#0d47a1}
+
+/* EQUIPMENT */
+.equip-item{
+  display:flex;gap:14px;align-items:flex-start;
+  padding:14px;border:1px solid var(--smoke);border-radius:8px;margin-bottom:10px;
+}
+.equip-icon{font-size:24px;color:var(--gold);flex-shrink:0;margin-top:2px}
+.equip-info .ei-name{font-size:14px;font-weight:600;margin-bottom:3px}
+.equip-info .ei-desc{font-size:12px;color:var(--mid);line-height:1.5}
+.equip-info .ei-price{font-size:11px;font-weight:600;color:var(--gold);margin-top:5px}
+
+/* EXERCISE */
+.exercise{
+  border:2px solid var(--gold);border-radius:10px;
+  padding:22px;margin:28px 0;background:#fffdf5;
+}
+.exercise .ex-eyebrow{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:6px;
+}
+.exercise .ex-title{font-size:16px;font-weight:700;margin-bottom:12px}
+.exercise ol{padding-left:18px;font-size:13px;color:#2c2b28;line-height:1.7}
+.exercise ol li{margin-bottom:6px}
+.exercise .ex-note{
+  margin-top:14px;padding:10px 14px;
+  background:#fff;border-radius:7px;border-left:3px solid var(--gold);
+  font-size:12px;color:var(--mid);line-height:1.5;
+}
+
+/* TIP / WARN */
+.tip{
+  padding:12px 16px;border-radius:8px;
+  background:#e3f2fd;border-left:3px solid #1565c0;
+  font-size:13px;color:#0d47a1;line-height:1.55;margin:14px 0;
+}
+.warn{
+  padding:12px 16px;border-radius:8px;
+  background:#fff3e0;border-left:3px solid #e65100;
+  font-size:13px;color:#bf360c;line-height:1.55;margin:14px 0;
+}
+.success{
+  padding:12px 16px;border-radius:8px;
+  background:#e8f5e9;border-left:3px solid #2e7d32;
+  font-size:13px;color:#1b5e20;line-height:1.55;margin:14px 0;
+}
+
+/* CENTERING SIM */
+.sim-wrap{background:#f0ece4;border-radius:10px;padding:20px;margin:20px 0}
+.sim-card-area{display:flex;justify-content:center;margin-bottom:18px}
+.sim-card{
+  width:150px;height:210px;background:#2e3a6e;
+  border-radius:8px;position:relative;overflow:hidden;
+}
+.sim-inner{
+  position:absolute;background:#4a5fa8;border-radius:4px;
+  top:12px;right:12px;bottom:12px;left:12px;transition:all .15s;
+}
+.sim-controls{display:flex;flex-direction:column;gap:10px}
+.sim-row{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--mid)}
+.sim-row label{min-width:55px}
+.sim-row input[type=range]{flex:1}
+.sim-row .sv{min-width:30px;text-align:right;font-size:12px;color:var(--ink);font-family:'DM Mono',monospace}
+.sim-result{text-align:center;margin-top:14px}
+.sim-ratio{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:4px}
+.sim-grade-text{font-size:13px;color:var(--mid)}
+
+/* CENTERING TOLERANCES TABLE */
+.tol-table{width:100%;border-collapse:collapse;font-size:12px;margin:16px 0}
+.tol-table th{background:var(--slab);color:var(--gold);font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:8px 10px;text-align:left}
+.tol-table td{padding:8px 10px;border-bottom:1px solid var(--smoke)}
+.tol-table tr:last-child td{border-bottom:none}
+.tol-table .c-psa{color:#d32f2f;font-weight:600}
+.tol-table .c-bgs{color:#1565c0;font-weight:600}
+.tol-table .c-cgc{color:#2e7d32;font-weight:600}
+.tol-table .c-tag{color:var(--tag);font-weight:600}
+
+/* NAV BOTTOM */
+.mod-nav-bottom{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:48px;padding-top:24px;border-top:1px solid var(--smoke);
+}
+.btn-nav{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;
+  cursor:pointer;border:1.5px solid var(--smoke);background:#fff;
+  color:var(--ink);transition:all .15s;text-decoration:none;
+}
+.btn-nav:hover{border-color:var(--ink)}
+.btn-nav-primary{
+  background:var(--slab);color:var(--gold);border-color:var(--gold);
+}
+.btn-nav-primary:hover{background:var(--slab-lt)}
+.btn-nav-done{
+  background:var(--gem);color:#fff;border-color:var(--gem);
+}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--smoke);margin:28px 0}
+
+/* MOBILE */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .3s}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .module{padding:24px 20px 60px}
+  .video-grid{grid-template-columns:1fr}
+  .company-grid{grid-template-columns:1fr}
+  .tag-tier-grid{grid-template-columns:1fr}
+  .mobile-toggle{
+    display:flex!important;
+    position:fixed;bottom:20px;right:20px;z-index:200;
+    width:50px;height:50px;border-radius:50%;
+    background:var(--slab);border:2px solid var(--gold);
+    align-items:center;justify-content:center;font-size:22px;
+    cursor:pointer;color:var(--gold);box-shadow:0 4px 16px rgba(0,0,0,.3);
+  }
+}
+.mobile-toggle{display:none}
+
+/* SCROLL TO TOP */
+.scroll-top{
+  position:fixed;bottom:24px;right:24px;
+  width:40px;height:40px;border-radius:50%;
+  background:var(--slab);border:1.5px solid var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;opacity:0;transition:opacity .3s;color:var(--gold);font-size:16px;
+  z-index:99;
+}
+.scroll-top.visible{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="s-eyebrow">Criya / Obirô · 2026</div>
+    <div class="s-title">Curso de<br>Grading TCG</div>
+  </div>
+  <div class="sidebar-progress">
+    <div class="prog-label">Progresso</div>
+    <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+    <div class="prog-text" id="progText">0 de 9 módulos</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Fundamentos</div>
+    <a class="nav-item active" onclick="goTo(0)" id="ni0">
+      <span class="nav-num">01</span> Introdução ao Grading
+      <span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" onclick="goTo(1)" id="ni1">
+      <span class="nav-num">02</span> As 4 Métricas
+      <span class="nav-check">✓</span>
+    </a>
+    <div class="nav-section-label">Análise técnica</div>
+    <a class="nav-item" onclick="goTo(2)" id="ni2">
+      <span class="nav-num">03</span> Centering
+      <span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" onclick="goTo(3)" id="ni3">
+      <span class="nav-num">04</span> Cantos (Corners)
+      <span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" onclick="goTo(4)" id="ni4">
+      <span class="nav-num">05</span> Bordas (Edges)
+      <span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" onclick="goTo(5)" id="ni5">
+      <span class="nav-num">06</span> Superfície (Surface)
+      <span class="nav-check">✓</span>
+    </a>
+    <div class="nav-section-label">TAG — Foco principal</div>
+    <a class="nav-item" onclick="goTo(6)" id="ni6">
+      <span class="nav-num">07</span> TAG — Tecnologia
+      <span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" onclick="goTo(7)" id="ni7">
+      <span class="nav-num">08</span> TAG — Critérios e Notas
+      <span class="nav-check">✓</span>
+    </a>
+    <div class="nav-section-label">Ferramentas</div>
+    <a class="nav-item" onclick="goTo(8)" id="ni8">
+      <span class="nav-num">09</span> Apps e Equipamentos
+      <span class="nav-check">✓</span>
+    </a>
+  </div>
+</nav>
+
+<!-- MOBILE TOGGLE -->
+<button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+
+<!-- SCROLL TOP -->
+<div class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</div>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+<!-- ═══ MÓDULO 0 — INTRODUÇÃO ═══ -->
+<div class="module active" id="m0">
+<span class="mod-eyebrow">Módulo 01 — Fundamentos</span>
+<h1 class="mod-title">Introdução ao Grading de Cartas Pokémon</h1>
+<p class="mod-lead">Grading é o processo de avaliação profissional de uma carta por uma empresa credenciada. A carta é inspecionada em 4 critérios, recebe uma nota de 1 a 10, e é lacrada em um case acrílico chamado <em>slab</em>. A nota define o valor de mercado — e a diferença entre PSA 9 e PSA 10 pode multiplicar o preço em 3x a 10x.</p>
+
+<h3 class="sub">O que acontece quando você grading uma carta</h3>
+<p>A carta entra crua (<em>raw</em>) — apenas embalada num sleeve — e sai como um <em>slab</em> numerado, registrado em pop report, com nota oficial. Esse processo cria confiança no mercado: qualquer comprador no mundo pode verificar a autenticidade e condição da carta escaneando o QR code ou consultando o número de certificação.</p>
+
+<div class="tip">💡 <strong>Regra de ouro:</strong> a nota final é determinada pela <strong>pior</strong> das 4 métricas (centering, corners, edges, surface). Uma carta perfeita em tudo mas com centering ruim vai tirar a nota do centering.</div>
+
+<h3 class="sub">As principais empresas — onde o mercado está hoje</h3>
+<div class="company-grid">
+  <div class="company-card cc-psa">
+    <div class="cc-name">PSA</div>
+    <div class="cc-desc">Professional Sports Authenticator. O padrão dominante desde os anos 90. PSA 10 é a referência de mercado e a nota mais liquida para venda.</div>
+    <div>Nota = pior das 4 métricas</div>
+    <div class="cc-note">🔴 Slab vermelho</div>
+  </div>
+  <div class="company-card cc-bgs">
+    <div class="cc-name">BGS / Beckett</div>
+    <div class="cc-desc">Subnotas individuais por categoria. Black Label (10/10/10/10) é o santo graal. Critérios de centering mais rígidos que a PSA.</div>
+    <div>Média ponderada + subnotas</div>
+    <div class="cc-note">🔵 Slab azul</div>
+  </div>
+  <div class="company-card cc-cgc">
+    <div class="cc-name">CGC</div>
+    <div class="cc-desc">Mais novo, custo menor, dá subnotas opcionais. Boa opção para cartas modernas e japonesas. Crescendo no Brasil em 2025–26.</div>
+    <div>Holística + subnotas opcionais</div>
+    <div class="cc-note">🟢 Slab verde</div>
+  </div>
+  <div class="company-card cc-tag">
+    <div class="cc-name">TAG ⭐</div>
+    <div class="cc-desc">Technical Authentication & Grading. Usa Photometric Stereoscopic Imaging — IA patente. A única chegando ao Brasil. Score 1–1000 pontos.</div>
+    <div>IA + verificação humana</div>
+    <div class="cc-note">🔷 Foco deste curso</div>
+  </div>
+</div>
+
+<h3 class="sub">Escala de notas PSA — referência rápida</h3>
+<table class="gtable">
+  <thead><tr><th>Nota</th><th>Nome</th><th>O que esperar visualmente</th></tr></thead>
+  <tbody>
+    <tr><td><span class="g10">PSA 10</span></td><td style="font-weight:600">Gem Mint</td><td style="font-size:12px;color:var(--mid)">Perfeito ou quase. Centering 55/45, cantos sem branco, bordas intactas, superfície sem risco visível.</td></tr>
+    <tr><td><span class="g9">PSA 9</span></td><td style="font-weight:600">Mint</td><td style="font-size:12px;color:var(--mid)">Pequenas imperfeições só visíveis de perto. Centering até 60/40. Micro-desgastes aceitáveis.</td></tr>
+    <tr><td><span class="g8">PSA 8</span></td><td style="font-weight:600">NM–Mint</td><td style="font-size:12px;color:var(--mid)">Leve desgaste visível. Algum branco nos cantos, risco leve na superfície ou borda com chipping.</td></tr>
+    <tr><td><span class="g7">PSA 7</span></td><td style="font-weight:600">Near Mint</td><td style="font-size:12px;color:var(--mid)">Desgaste moderado. Centering até 70/30, desgaste visível mas não destrutivo.</td></tr>
+    <tr><td><span class="glo">PSA 1–6</span></td><td style="font-weight:600">Poor → Ex-Mt</td><td style="font-size:12px;color:var(--mid)">Dano visível progressivo — dobras, rasgos, desgaste pesado. Geralmente não vale o custo de graduar.</td></tr>
+  </tbody>
+</table>
+
+<div class="card card-gold">
+  <h4 class="mini">PSA Qualifiers — quando a nota vem com observação</h4>
+  <p style="font-size:13px;color:var(--mid)">Em certos casos a PSA adiciona um sufixo à nota. Exemplos: <strong>8(OC)</strong> = Off-Center, <strong>8(ST)</strong> = Stain, <strong>8(PD)</strong> = Print Defect, <strong>8(MK)</strong> = Marks. Uma carta 8(OC) vale menos que uma 8 limpa, pois o defeito está explicitado.</p>
+</div>
+
+<div class="card">
+  <h4 class="mini">📺 Vídeos obrigatórios deste módulo</h4>
+  <div class="video-grid">
+    <a class="video-card" href="https://www.youtube.com/watch?v=V4FPHufOTwI" target="_blank">
+      <div class="video-thumb"><span class="yt-label">YouTube</span><div class="play-btn">▶</div></div>
+      <div class="video-meta"><div class="vm-title">Full guide to grading Pokémon cards (2025)</div><div class="vm-ch">NDup Mastery · 18 min</div></div>
+    </a>
+    <a class="video-card" href="https://www.youtube.com/watch?v=1w1Y6YzTAcY" target="_blank">
+      <div class="video-thumb"><span class="yt-label">YouTube</span><div class="play-btn">▶</div></div>
+      <div class="video-meta"><div class="vm-title">How to Submit Cards to PSA — Complete Guide</div><div class="vm-ch">TCG Collector · 22 min</div></div>
+    </a>
+  </div>
+</div>
+
+<div class="exercise">
+  <div class="ex-eyebrow">✏️ Exercício 1.1 — Calibração inicial</div>
+  <div class="ex-title">Avalie 5 cartas sem nenhuma ferramenta</div>
+  <ol>
+    <li>Escolha 5 cartas da sua coleção com condições variadas.</li>
+    <li>Coloque-as lado a lado sob luz natural (não use lupa nem apps ainda).</li>
+    <li>Para cada uma, estime intuitivamente uma nota de 1 a 10.</li>
+    <li>Anote sua previsão em papel ou planilha junto com o nome da carta.</li>
+    <li>Guarde essas anotações — você vai revisitar no módulo 9.</li>
+  </ol>
+  <div class="ex-note">🎯 Meta: a diferença entre sua avaliação inicial e a final vai medir exatamente o quanto você evoluiu durante o curso.</div>
+</div>
+
+<div class="mod-nav-bottom">
+  <span></span>
+  <a class="btn-nav btn-nav-primary" onclick="goTo(1)">Próximo: As 4 Métricas →</a>
+</div>
+</div>
+
+<!-- ═══ MÓDULO 1 — 4 MÉTRICAS ═══ -->
+<div class="module" id="m1">
+<span class="mod-eyebrow">Módulo 02 — Estrutura da Avaliação</span>
+<h1 class="mod-title">As Quatro Métricas de Grading</h1>
+<p class="mod-lead">Toda empresa de grading avalia as mesmas 4 categorias. A nota final é, na PSA, igual à pior nota entre as quatro. Entender o peso de cada uma te ajuda a priorizar o que olhar primeiro numa avaliação.</p>
+
+<div class="metric-grid">
+  <div class="metric-card">
+    <div class="mc-icon">📐</div>
+    <div class="mc-name">Centering</div>
+    <div class="mc-desc">Alinhamento da arte dentro das bordas. É a causa #1 de queda de PSA 10 para 9 — afeta mais cartas do que qualquer outro critério.</div>
+    <span class="mc-tag">Mensurável</span>
+  </div>
+  <div class="metric-card">
+    <div class="mc-icon">🔹</div>
+    <div class="mc-name">Corners (Cantos)</div>
+    <div class="mc-desc">Os 4 cantos avaliados individualmente. A nota de corners é a do pior dos 4. Qualquer branco visível impacta diretamente a nota.</div>
+    <span class="mc-tag">Visual</span>
+  </div>
+  <div class="metric-card">
+    <div class="mc-icon">▭</div>
+    <div class="mc-name">Edges (Bordas)</div>
+    <div class="mc-desc">As 4 bordas retas da carta. Chipping, desgaste e irregularidades de corte de fábrica são penalizados — bordas escuras revelam mais.</div>
+    <span class="mc-tag">Visual</span>
+  </div>
+  <div class="metric-card">
+    <div class="mc-icon">✨</div>
+    <div class="mc-name">Surface (Superfície)</div>
+    <div class="mc-desc">Frente e verso separadamente. Riscos no holo, print lines de fábrica, manchas e perda de brilho. O critério mais difícil de analisar.</div>
+    <span class="mc-tag">Técnico</span>
+  </div>
+</div>
+
+<h3 class="sub">Como cada empresa usa essas métricas</h3>
+<table class="gtable">
+  <thead><tr><th>Empresa</th><th>Metodologia</th><th>Centering para 10</th><th>Diferencial</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>PSA</strong></td>
+      <td style="font-size:12px">Nota = pior das 4 métricas</td>
+      <td style="font-size:12px">55/45 frente (padrão 2025)</td>
+      <td style="font-size:12px">Maior liquidez no mundo</td>
+    </tr>
+    <tr>
+      <td><strong>BGS</strong></td>
+      <td style="font-size:12px">Média ponderada com subnotas</td>
+      <td style="font-size:12px">50/50 ideal, 52/48 máx</td>
+      <td style="font-size:12px">Black Label — o mais rígido</td>
+    </tr>
+    <tr>
+      <td><strong>CGC</strong></td>
+      <td style="font-size:12px">Holística + subnotas opcionais</td>
+      <td style="font-size:12px">Similar à PSA</td>
+      <td style="font-size:12px">Boa relação custo/benefício</td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--tag)">TAG ⭐</strong></td>
+      <td style="font-size:12px">IA + score 1–1000 pts + 8 subnotas</td>
+      <td style="font-size:12px">52/48 TCG (Pristine 51/49)</td>
+      <td style="font-size:12px">Transparência máxima via DIG</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="warn">⚠️ <strong>Mudança importante 2025:</strong> A PSA apertou o critério de centering de 60/40 para 55/45 no front para PSA 10. Cartas que antes passariam para 10 agora chegam como 9. Sempre use o padrão novo nas suas análises.</div>
+
+<div class="tip">💡 <strong>Dica de triagem:</strong> numa análise rápida, olhe primeiro para centering (mais fácil de ver à distância) e cantos (mais fácil de ver sob luz). Surface e edges pedem microscópio. Use essa ordem: Centering → Cantos → Bordas → Superfície.</div>
+
+<div class="exercise">
+  <div class="ex-eyebrow">✏️ Exercício 2.1 — Mapeamento por categoria</div>
+  <div class="ex-title">Identifique o ponto fraco de 10 cartas</div>
+  <ol>
+    <li>Pegue 10 cartas diferentes da sua coleção.</li>
+    <li>Para cada uma, identifique qual das 4 métricas parece mais comprometida (olho nu apenas).</li>
+    <li>Crie uma tabela: carta | centering | cantos | bordas | superfície | ponto mais fraco.</li>
+    <li>Volte e refaça essa tabela após terminar os módulos 3–6 com as técnicas aprendidas.</li>
+  </ol>
+  <div class="ex-note">🎯 Objetivo: treinar seu olho para identificar o "calcanhar de Aquiles" de cada carta antes de qualquer ferramenta.</div>
+</div>
+
+<div class="mod-nav-bottom">
+  <a class="btn-nav" onclick="goTo(0)">← Anterior</a>
+  <a class="btn-nav btn-nav-primary" onclick="goTo(2)">Próximo: Centering →</a>
+</div>
+</div>
+
+<!-- ═══ MÓDULO 2 — CENTERING ═══ -->
+<div class="module" id="m2">
+<span class="mod-eyebrow">Módulo 03 — Análise Técnica</span>
+<h1 class="mod-title">Centering — Centralização da Arte</h1>
+<p class="mod-lead">Centering mede a proporção das bordas opostas da carta. Uma carta 55/45 tem a borda esquerda 10% maior que a direita. Para PSA 10 (padrão 2025) você precisa de 55/45 ou melhor na frente, e 75/25 ou melhor no verso.</p>
+
+<h3 class="sub">Como medir — dois métodos</h3>
+<p><strong>Método 1 — Régua:</strong> meça em mm as bordas esquerda e direita separadamente. Calcule: borda maior ÷ (esquerda + direita) × 100. Repita para topo/base. Para cartas Pokémon, meça da borda da carta até a linha colorida interna (não até a arte).</p>
+<p><strong>Método 2 — App:</strong> fotografe a carta com o Card Centering Calculator ou CardGrader.ai e o app calcula automaticamente. Útil para velocidade; a régua é mais precisa para cartas com bordas irregulares.</p>
+
+<h3 class="sub">Simulador de centering</h3>
+<div class="sim-wrap">
+  <div class="sim-card-area">
+    <div class="sim-card" id="simCard">
+      <div class="sim-inner" id="simInner"></div>
+    </div>
+  </div>
+  <div class="sim-controls">
+    <div class="sim-row"><label>Esquerda</label><input type="range" min="5" max="30" value="12" id="slL" oninput="simUpdate()"><span class="sv" id="vL">12</span></div>
+    <div class="sim-row"><label>Direita</label><input type="range" min="5" max="30" value="12" id="slR" oninput="simUpdate()"><span class="sv" id="vR">12</span></div>
+    <div class="sim-row"><label>Topo</label><input type="range" min="5" max="30" value="12" id="slT" oninput="simUpdate()"><span class="sv" id="vT">12</span></div>
+    <div class="sim-row"><label>Base</label><input type="range" min="5" max="30" value="12" id="slB" oninput="simUpdate()"><span class="sv" id="vB">12</span></div>
+  </div>
+  <div class="sim-result">
+    <div class="sim-ratio" id="simRatio">LR: 50/50 · TB: 50/50</div>
+    <div class="sim-grade-text" id="simGrade">Estimativa: —</div>
+  </div>
+</div>
+
+<h3 class="sub">Tolerâncias por empresa e nota</h3>
+<table class="tol-table">
+  <thead><tr><th>Nota</th><th class="c-psa">PSA (front)</th><th class="c-psa">PSA (back)</th><th class="c-bgs">BGS</th><th class="c-tag">TAG TCG</th></tr></thead>
+  <tbody>
+    <tr><td><span class="g10">10 Gem</span></td><td class="c-psa">55/45</td><td class="c-psa">75/25</td><td class="c-bgs">52/48</td><td class="c-tag">52/48 front</td></tr>
+    <tr><td><span class="gtag">10 Prist.</span></td><td>—</td><td>—</td><td class="c-bgs">50/50 *</td><td class="c-tag">51/49 front</td></tr>
+    <tr><td><span class="g9">9 Mint</span></td><td class="c-psa">60/40</td><td class="c-psa">90/10</td><td class="c-bgs">55/45</td><td class="c-tag">60/40</td></tr>
+    <tr><td><span class="g8">8 NM-Mt</span></td><td class="c-psa">65/35</td><td class="c-psa">>90/10</td><td class="c-bgs">60/40</td><td class="c-tag">62.5/37.5</td></tr>
+    <tr><td><span class="g7">7 NM</span></td><td class="c-psa">70/30</td><td class="c-psa">qualquer</td><td class="c-bgs">65/35</td><td class="c-tag">70/30</td></tr>
+  </tbody>
+</table>
+<p style="font-size:11px;color:var(--mid)">* BGS 10 Black Label exige 10/10/10/10 em subnotas, sendo centering 50/50 nos dois lados.</p>
+
+<div class="tip">💡 <strong>Dica prática:</strong> cartas descentradas ao topo/base são mais difíceis de detectar visualmente do que esquerda/direita. Sempre meça os dois eixos antes de assumir que está centrado.</div>
+
+<div class="card">
+  <h4 class="mini">📺 Vídeo recomendado — Centering</h4>
+  <div class="video-grid">
+    <a class="video-card" href="https://www.youtube.com/watch?v=nkxSXfEHPFE" target="_blank">
+      <div class="video-thumb"><span class="yt-label">YouTube</span><div class="play-btn">▶</div></div>
+      <div class="video-meta"><div class="vm-title">Pre-Grading Tips &amp; Tricks for Better Grades</div><div class="vm-ch">Legendary Cardboard · 14 min</div></div>
+    </a>
+  </div>
+</div>
+
+<div class="exercise">
+  <div class="ex-eyebrow">✏️ Exercício 3.1 — Medição manual de centering</div>
+  <div class="ex-title">Calcule o centering de 5 cartas com régua</div>
+  <ol>
+    <li>Use uma régua milimétrica. Meça as bordas esquerda e direita de cada carta em mm.</li>
+    <li>Calcule a proporção: (borda maior) ÷ (esq + dir) × 100. Ex: 14mm esq + 10mm dir = 58/42.</li>
+    <li>Repita para topo e base.</li>
+    <li>Compare com a tabela de tolerâncias acima e estime a nota de centering de cada carta.</li>
+    <li>Depois, analise as mesmas cartas com o Card Centering Calculator e compare com sua medição manual.</li>
+  </ol>
+  <div class="ex-note">🎯 Você vai descobrir que o olho nu subestima o descentramento — a régua revela surpresas que parecem invisíveis até você medir.</div>
+</div>
+
+<div class="mod-nav-bottom">
+  <a class="btn-nav" onclick="goTo(1)">← Anterior</a>
+  <a class="btn-nav btn-nav-primary" onclick="goTo(3)">Próximo: Corners →</a>
+</div>
+</div>
+
+<!-- ═══ MÓDULO 3 — CORNERS ═══ -->
+<div class="module" id="m3">
+<span class="mod-eyebrow">Módulo 04 — Análise Técnica</span>
+<h1 class="mod-title">Corners — Analisando os 4 Cantos</h1>
+<p class="mod-lead">Os cantos são avaliados individualmente — a nota de corners é a do <strong>pior</strong> dos 4. O dano mais comum é o "whitening" — quando a fibra interna branca da carta aparece por desgaste da ponta. É o segundo critério mais limitante depois do centering.</p>
+
+<h3 class="sub">Tipos de defeito em cantos</h3>
+<div class="defect-grid">
+  <div class="defect-card">
+    <div class="defect-viz">
+      <svg width="100" height="100" viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="6" fill="#2e3a6e"/><rect x="16" y="16" width="68" height="68" rx="3" fill="#4a5fa8"/><polygon points="80,12 90,22 80,22" fill="white" opacity="0.9"/></svg>
+    </div>
+    <div class="defect-info"><strong>Whitening</strong><span>Fibra branca exposta na ponta por desgaste. O defeito mais comum. Elimina PSA 10 imediatamente.</span></div>
+  </div>
+  <div class="defect-card">
+    <div class="defect-viz">
+      <svg width="100" height="100" viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="6" fill="#2e3a6e"/><rect x="16" y="16" width="68" height="68" rx="3" fill="#4a5fa8"/><path d="M82 16 Q90 16 90 24 L84 20 Z" fill="#1a1a2e" opacity="0.85"/></svg>
+    </div>
+    <div class="defect-info"><strong>Rounding</strong><span>Canto arredondado por desgaste. Perde a nitidez original. Normalmente causa PSA 7 ou menos.</span></div>
+  </div>
+  <div class="defect-card">
+    <div class="defect-viz">
+      <svg width="100" height="100" viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="6" fill="#2e3a6e"/><rect x="16" y="16" width="68" height="68" rx="3" fill="#4a5fa8"/><line x1="80" y1="18" x2="92" y2="14" stroke="white" stroke-width="1.5" opacity="0.8"/><line x1="82" y1="14" x2="88" y2="22" stroke="white" stroke-width="1.5" opacity="0.8"/><line x1="84" y1="18" x2="90" y2="18" stroke="white" stroke-width="1" opacity="0.6"/></svg>
+    </div>
+    <div class="defect-info"><strong>Fraying</strong><span>Fibras separadas na ponta. Parece "cabeludo" sob lupa. Visível só com ampliação.</span></div>
+  </div>
+  <div class="defect-card">
+    <div class="defect-viz">
+      <svg width="100" height="100" viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="6" fill="#2e3a6e"/><rect x="16" y="16" width="68" height="68" rx="3" fill="#4a5fa8"/><path d="M82 16 L90 16 L90 24 L80 20 Z" fill="#0d0d1a" opacity="0.9"/></svg>
+    </div>
+    <div class="defect-info"><strong>Dent/Crease</strong><span>Amassado ou dobra no canto. Elimina qualquer chance de PSA 9+. Irrecuperável.</span></div>
+  </div>
+</div>
+
+<h3 class="sub">Referência de nota por condição dos cantos</h3>
+<table class="gtable">
+  <thead><tr><th>Nota</th><th>Condição exigida</th></tr></thead>
+  <tbody>
+    <tr><td><span class="g10">PSA 10</span></td><td style="font-size:12px;color:var(--mid)">Pontudos e perfeitos sob qualquer ampliação. Zero whitening visível, nem sob lupa 10x.</td></tr>
+    <tr><td><span class="g9">PSA 9</span></td><td style="font-size:12px;color:var(--mid)">Whitening mínimo, invisível a olho nu. Pode aparecer levemente sob lupa mas não é destrutivo.</td></tr>
+    <tr><td><span class="g8">PSA 8</span></td><td style="font-size:12px;color:var(--mid)">Whitening leve visível a olho nu em 1–2 cantos. Sem rounding. Sem fraying perceptível.</td></tr>
+    <tr><td><span class="g7">PSA 7</span></td><td style="font-size:12px;color:var(--mid)">Whitening moderado em múltiplos cantos. Pode ter leve rounding começando. Sem dents.</td></tr>
+    <tr><td><span class="glo">PSA 6–</span></td><td style="font-size:12px;color:var(--mid)">Rounding evidente, fraying visível, ou qualquer dent/crease. Dano estrutural.</td></tr>
+  </tbody>
+</table>
+
+<div class="tip">💡 <strong>Técnica de luz para cantos:</strong> segure o canto da carta apontado <em>diretamente</em> para uma fonte de luz pontual (lanterna LED). O whitening aparece como brilho branco nas pontas contra o fundo escuro. Use também luz <strong>rasante lateral</strong> para revelar amassados.</div>
+
+<div class="warn">⚠️ <strong>Cuidado com sleeves:</strong> sleeves de má qualidade, especialmente os chamados "penny sleeves" de polipropileno, causam whitening por fricção ao inserir e remover. Use sempre sleeves "Perfect Fit" para armazenamento de cartas que você pretende graduar.</div>
+
+<div class="exercise">
+  <div class="ex-eyebrow">✏️ Exercício 4.1 — Inspeção sistemática de cantos</div>
+  <div class="ex-title">Analise 5 cartas com lupa e microscópio</div>
+  <ol>
+    <li>Pegue 5 cartas. Para cada uma, inspecione os 4 cantos com lupa 10x sob luz pontual direta.</li>
+    <li>Para cada canto, classifique: Perfeito / Whitening leve / Whitening visível / Rounding / Fraying / Dent.</li>
+    <li>Repita a mesma análise com o microscópio digital a 30x com luz rasante lateral.</li>
+    <li>Anote: o microscópio revelou danos que a lupa 10x não mostrou? Em qual frequência?</li>
+    <li>Fotografe os piores defeitos encontrados — começa seu arquivo de referência pessoal.</li>
+  </ol>
+  <div class="ex-note">🎯 Cartas em sleeves desde novas tendem a ter cantos melhores. Mas o sleeve em si pode ter causado whitening se for de má qualidade — examine com cuidado.</div>
+</div>
+
+<div class="mod-nav-bottom">
+  <a class="btn-nav" onclick="goTo(2)">← Anterior</a>
+  <a class="btn-nav btn-nav-primary" onclick="goTo(4)">Próximo: Edges →</a>
+</div>
+</div>
+
+<!-- ═══ MÓDULO 4 — EDGES ═══ -->
+<div class="module" id="m4">
+<span class="mod-eyebrow">Módulo 05 — Análise Técnica</span>
+<h1 class="mod-title">Edges — As Quatro Bordas da Carta</h1>
+<p class="mod-lead">As bordas (edges) são os 4 lados retos da carta — distintos dos cantos. Bordas escuras (vintage Base Set) revelam desgaste imediatamente como manchas brancas contrastantes. Bordas claras (modernas) escondem um pouco mais — mas sob microscópio nada escapa.</p>
+
+<h3 class="sub">Tipos de defeito em bordas</h3>
+<div class="defect-grid">
+  <div class="defect-card">
+    <div class="defect-viz">
+      <svg width="100" height="100" viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="6" fill="#2e3a6e"/><rect x="16" y="16" width="68" height="68" rx="3" fill="#4a5fa8"/><rect x="82" y="16" width="5" height="68" fill="white" opacity="0.15"/><circle cx="86" cy="35" r="3" fill="white" opacity="0.8"/><circle cx="86" cy="55" r="2" fill="white" opacity="0.6"/></svg>
+    </div>
+    <div class="defect-info"><strong>Edge Whitening</strong><span>Camada branca visível ao longo de uma borda. Muito comum. Bordas escuras mostram imediatamente.</span></div>
+  </div>
+  <div class="defect-card">
+    <div class="defect-viz">
+      <svg width="100" height="100" viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="6" fill="#2e3a6e"/><rect x="16" y="16" width="68" height="68" rx="3" fill="#4a5fa8"/><path d="M84 40 L92 45 L84 50" fill="white" opacity="0.85"/></svg>
+    </div>
+    <div class="defect-info"><strong>Chipping</strong><span>Fragmento da borda que saiu. Reduz nota para PSA 7 ou menos dependendo do tamanho.</span></div>
+  </div>
+  <div class="defect-card">
+    <div class="defect-viz">
+      <svg width="100" height="100" viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="6" fill="#2e3a6e"/><path d="M84 12 L92 10 L84 88 L78 90 Z" fill="#0d0d1a" opacity="0.55"/><rect x="16" y="16" width="68" height="68" rx="3" fill="#4a5fa8"/></svg>
+    </div>
+    <div class="defect-info"><strong>Diamond Cut</strong><span>Corte diagonal de fábrica. Comum em cartas vintage. A borda parece levemente "inclinada".</span></div>
+  </div>
+  <div class="defect-card">
+    <div class="defect-viz">
+      <svg width="100" height="100" viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="6" fill="#2e3a6e"/><rect x="16" y="16" width="68" height="68" rx="3" fill="#4a5fa8"/><line x1="80" y1="25" x2="90" y2="28" stroke="white" stroke-width="1" opacity="0.55"/><line x1="80" y1="60" x2="90" y2="57" stroke="white" stroke-width="1" opacity="0.55"/><line x1="80" y1="42" x2="90" y2="44" stroke="white" stroke-width="0.7" opacity="0.4"/></svg>
+    </div>
+    <div class="defect-info"><strong>Rough Cut</strong><span>Borda irregular de fábrica. Penaliza especialmente no BGS e TAG que medem dimensões com precisão.</span></div>
+  </div>
+</div>
+
+<div class="tip">💡 <strong>Técnica de inspeção de bordas:</strong> segure a carta verticalmente com a borda voltada diretamente para você sob luz direta. Incline lentamente até 45°. Whitening e chips aparecem como reflexos brilhantes que "saltam" contra o fundo.</div>
+
+<h3 class="sub">Bordas escuras vs. bordas claras</h3>
+<div class="card">
+  <p style="font-size:13px;color:var(--mid)"><strong>Cartas com borda preta</strong> (ex: Base Set vintage, muitas alt arts modernas): qualquer desgaste mínimo aparece como branco contrastante imediatamente visível. São mais difíceis de encontrar em condição perfeita, mas mais fáceis de avaliar — o defeito é óbvio.</p>
+  <p style="font-size:13px;color:var(--mid)"><strong>Cartas com borda amarela/dourada/branca</strong> (ex: muitas Scarlet &amp; Violet modernas): o desgaste se camufla na cor da borda. Podem parecer perfeitas a olho nu mas revelar chipping sob microscópio. Requerem análise mais cuidadosa.</p>
+</div>
+
+<h3 class="sub">Sequência profissional de análise de bordas</h3>
+<p>1. <strong>Borda superior</strong> — percorra da esquerda para a direita sob microscópio a 30–50x.<br>
+2. <strong>Borda direita</strong> — percorra de cima para baixo.<br>
+3. <strong>Borda inferior</strong> — percorra da direita para a esquerda.<br>
+4. <strong>Borda esquerda</strong> — percorra de baixo para cima.<br>
+5. <strong>Vire a carta</strong> — repita a sequência no verso.<br>
+Anote posição e tipo de qualquer defeito encontrado.</p>
+
+<div class="exercise">
+  <div class="ex-eyebrow">✏️ Exercício 5.1 — Varredura sistemática de bordas</div>
+  <div class="ex-title">Analisar 3 cartas borda a borda no microscópio</div>
+  <ol>
+    <li>Escolha 3 cartas: 1 vintage (bordas escuras), 1 moderna (bordas claras), 1 holo.</li>
+    <li>Com o microscópio a 30–50x, percorra cada borda seguindo a sequência acima.</li>
+    <li>Anote posição e tipo de defeito: "borda sup, 1/3 da esquerda, chipping pequeno".</li>
+    <li>Vire a carta e repita no verso — bordas do verso costumam ter condições diferentes da frente.</li>
+    <li>Fotografe os defeitos encontrados para seu arquivo de referência.</li>
+  </ol>
+  <div class="ex-note">🎯 Criar um arquivo fotográfico de defeitos é o que separa um avaliador casual de um consultor profissional. Comece esse arquivo agora.</div>
+</div>
+
+<div class="mod-nav-bottom">
+  <a class="btn-nav" onclick="goTo(3)">← Anterior</a>
+  <a class="btn-nav btn-nav-primary" onclick="goTo(5)">Próximo: Surface →</a>
+</div>
+</div>
+
+<!-- ═══ MÓDULO 5 — SURFACE ═══ -->
+<div class="module" id="m5">
+<span class="mod-eyebrow">Módulo 06 — Análise Técnica</span>
+<h1 class="mod-title">Surface — O Critério Mais Técnico</h1>
+<p class="mod-lead">A superfície é avaliada frente e verso separadamente. É o critério mais difícil de analisar — especialmente no holo, onde micro-riscos são completamente invisíveis a olho nu mas aparecem nitidamente sob microscópio com a iluminação correta.</p>
+
+<h3 class="sub">Tipos de defeito em superfície</h3>
+<div class="defect-grid">
+  <div class="defect-card">
+    <div class="defect-viz">
+      <svg width="100" height="100" viewBox="0 0 100 100"><rect x="14" y="14" width="72" height="72" rx="5" fill="#4a5fa8"/><line x1="25" y1="30" x2="75" y2="65" stroke="white" stroke-width="1.2" opacity="0.7"/><line x1="35" y1="65" x2="65" y2="40" stroke="white" stroke-width="0.7" opacity="0.5"/></svg>
+    </div>
+    <div class="defect-info"><strong>Scratches</strong><span>Riscos na camada de impressão ou verniz. Aparecem claramente sob luz rasante a 30–45°.</span></div>
+  </div>
+  <div class="defect-card">
+    <div class="defect-viz">
+      <svg width="100" height="100" viewBox="0 0 100 100"><rect x="14" y="14" width="72" height="72" rx="5" fill="#4a5fa8"/><line x1="20" y1="32" x2="80" y2="32" stroke="rgba(255,255,255,0.35)" stroke-width="0.9"/><line x1="20" y1="44" x2="80" y2="44" stroke="rgba(255,255,255,0.28)" stroke-width="0.9"/><line x1="20" y1="56" x2="80" y2="56" stroke="rgba(255,255,255,0.32)" stroke-width="0.9"/><line x1="20" y1="68" x2="80" y2="68" stroke="rgba(255,255,255,0.25)" stroke-width="0.9"/></svg>
+    </div>
+    <div class="defect-info"><strong>Print Lines</strong><span>Linhas de impressão de fábrica. Aparecem em ângulo específico de luz. Não são culpa do dono — mas penalizam igual.</span></div>
+  </div>
+  <div class="defect-card">
+    <div class="defect-viz">
+      <svg width="100" height="100" viewBox="0 0 100 100"><defs><radialGradient id="hl"><stop offset="0%" stop-color="#C9A84C" stop-opacity="0.7"/><stop offset="100%" stop-color="#4a5fa8" stop-opacity="0"/></radialGradient></defs><rect x="14" y="14" width="72" height="72" rx="5" fill="#4a5fa8"/><rect x="14" y="14" width="72" height="72" rx="5" fill="url(#hl)"/><line x1="40" y1="25" x2="60" y2="75" stroke="white" stroke-width="0.8" opacity="0.65"/></svg>
+    </div>
+    <div class="defect-info"><strong>Holo Scratch</strong><span>Risco no foil holográfico. O defeito mais caro. Aparece como linha "parada" enquanto o padrão ao redor se move com a luz.</span></div>
+  </div>
+  <div class="defect-card">
+    <div class="defect-viz">
+      <svg width="100" height="100" viewBox="0 0 100 100"><rect x="14" y="14" width="72" height="72" rx="5" fill="#4a5fa8"/><circle cx="40" cy="40" r="7" fill="rgba(180,180,200,0.35)" stroke="rgba(255,255,255,0.3)" stroke-width="0.7"/><circle cx="62" cy="58" r="4" fill="rgba(180,180,200,0.28)" stroke="rgba(255,255,255,0.3)" stroke-width="0.7"/></svg>
+    </div>
+    <div class="defect-info"><strong>Indentation</strong><span>Amassado na superfície sem rasgar. Visível sob luz rasante. Comum em cartas guardadas sob pressão.</span></div>
+  </div>
+  <div class="defect-card">
+    <div class="defect-viz">
+      <svg width="100" height="100" viewBox="0 0 100 100"><rect x="14" y="14" width="72" height="72" rx="5" fill="#4a5fa8"/><path d="M14 14 L30 14 L14 30 Z" fill="rgba(192,192,192,0.5)"/><path d="M86 14 L70 14 L86 30 Z" fill="rgba(192,192,192,0.4)"/></svg>
+    </div>
+    <div class="defect-info"><strong>Silvering</strong><span>Prateado nas bordas do holo. Comum em holos vintage. A foil se separa da carta nas extremidades.</span></div>
+  </div>
+  <div class="defect-card">
+    <div class="defect-viz">
+      <svg width="100" height="100" viewBox="0 0 100 100"><rect x="14" y="14" width="72" height="72" rx="5" fill="#4a5fa8"/><circle cx="50" cy="50" r="12" fill="rgba(150,120,80,0.4)" stroke="rgba(180,140,80,0.5)" stroke-width="1"/></svg>
+    </div>
+    <div class="defect-info"><strong>Stain</strong><span>Mancha por contato com umidade, óleo, ou outro material. Aparece como área com cor diferente ou textura alterada.</span></div>
+  </div>
+</div>
+
+<h3 class="sub">Como analisar o holo — a técnica dos 4 ângulos</h3>
+<p>1. <strong>Luz frontal direta</strong> (90°): vê impressão geral, manchas grossas, color bleeding.<br>
+2. <strong>Luz rasante esquerda</strong> (~30°): revela scratches que vão da direita para a esquerda.<br>
+3. <strong>Luz rasante direita</strong> (~30°): revela scratches na direção oposta.<br>
+4. <strong>Rotação lenta do ângulo</strong>: riscos no holo aparecem como linhas que "ficam estáticas" enquanto o padrão holográfico ao redor se move. Esse é o indicador mais confiável de holo scratch.</p>
+
+<div class="warn">⚠️ <strong>Print lines são defeitos de fábrica</strong> — não são causados pelo dono da carta. Mas a PSA, BGS e TAG penalizam do mesmo jeito. Antes de submeter, teste a carta sob luz de 45° para identificar print lines. Uma carta com print lines severas raramente passa de PSA 8 mesmo perfeita nos outros critérios.</div>
+
+<div class="card">
+  <h4 class="mini">📺 Vídeos recomendados — Surface Analysis</h4>
+  <div class="video-grid">
+    <a class="video-card" href="https://www.youtube.com/watch?v=voMafiCYQcc" target="_blank">
+      <div class="video-thumb"><span class="yt-label">YouTube</span><div class="play-btn">▶</div></div>
+      <div class="video-meta"><div class="vm-title">The TRUTH about Grading Pokémon Cards in 2025</div><div class="vm-ch">YouTube · 20 min</div></div>
+    </a>
+    <a class="video-card" href="https://www.youtube.com/watch?v=4GJN_7eEbGc" target="_blank">
+      <div class="video-thumb"><span class="yt-label">YouTube</span><div class="play-btn">▶</div></div>
+      <div class="video-meta"><div class="vm-title">Pre-Grading com Microscópio Digital (LinkMicro LM210S)</div><div class="vm-ch">YouTube · 16 min</div></div>
+    </a>
+  </div>
+</div>
+
+<div class="exercise">
+  <div class="ex-eyebrow">✏️ Exercício 6.1 — Análise de superfície em 4 ângulos</div>
+  <div class="ex-title">Analisar 5 cartas holo em 4 ângulos de luz</div>
+  <ol>
+    <li>Escolha 5 cartas holográficas de diferentes épocas (vintage + moderna).</li>
+    <li>Para cada uma, examine nos 4 ângulos descritos acima e anote o que cada ângulo revela.</li>
+    <li>No microscópio, centralize o holo e mude o ângulo da luz lentamente de 0° a 90°.</li>
+    <li>Classifique a superfície de cada carta: Impecável / Print lines / Scratch leve / Scratch visível / Silvering.</li>
+    <li>Compare com sua avaliação a olho nu — o microscópio costuma revelar 2–3x mais defeitos.</li>
+  </ol>
+  <div class="ex-note">🎯 O ângulo de luz que mais revela defeitos no holo Pokémon moderno é geralmente entre 30° e 45°. LED ajustável do microscópio facilita muito essa análise.</div>
+</div>
+
+<div class="mod-nav-bottom">
+  <a class="btn-nav" onclick="goTo(4)">← Anterior</a>
+  <a class="btn-nav btn-nav-primary" onclick="goTo(6)">Próximo: TAG — Tecnologia →</a>
+</div>
+</div>
+
+<!-- ═══ MÓDULO 6 — TAG TECNOLOGIA ═══ -->
+<div class="module" id="m6">
+<span class="mod-eyebrow">Módulo 07 — TAG Grading (Foco Principal)</span>
+<h1 class="mod-title">TAG — A Tecnologia por Trás do Grading</h1>
+<p class="mod-lead">A TAG (Technical Authentication & Grading) é a única empresa de grading com tecnologia patente de visão computacional chegando ao Brasil. Entender como ela funciona é essencial para trabalhar como intermediário e consultor.</p>
+
+<div class="tag-hero">
+  <div class="th-eyebrow">Technical Authentication & Grading · taggrading.com</div>
+  <div class="th-title">Photometric Stereoscopic Imaging</div>
+  <div class="th-desc">A TAG usa uma câmera que fotografa a carta sob múltiplos ângulos de luz simultaneamente, gerando um mapa 3D da superfície da carta. Isso permite detectar defeitos submilimétricos que são invisíveis a olho humano e inconsistentes na inspeção manual — é a mesma tecnologia usada em controle de qualidade industrial e visão computacional científica.</div>
+</div>
+
+<h3 class="sub">Como funciona o processo TAG passo a passo</h3>
+<div class="tag-process">
+  <div class="tag-step">
+    <div class="tag-step-left"><div class="tag-dot">01</div><div class="tag-line"></div></div>
+    <div class="tag-step-right"><strong>Recebimento e triagem</strong><p>A carta chega embalada em semi-rigid shield (parecido com Card Saver) + penny sleeve. A TAG registra a submissão e faz uma triagem inicial de autenticidade e elegibilidade.</p></div>
+  </div>
+  <div class="tag-step">
+    <div class="tag-step-left"><div class="tag-dot">02</div><div class="tag-line"></div></div>
+    <div class="tag-step-right"><strong>Card ID — Identificação por OCR</strong><p>A carta é identificada por reconhecimento óptico de texto (OCR) + banco de dados interno. O sistema verifica set, número, idioma e confirma que é uma carta legítima e elegível para grading.</p></div>
+  </div>
+  <div class="tag-step">
+    <div class="tag-step-left"><div class="tag-dot">03</div><div class="tag-line"></div></div>
+    <div class="tag-step-right"><strong>Image Processing — Photometric Stereo Imaging</strong><p>A carta é capturada pela câmera patenteada que ilumina de múltiplos ângulos simultaneamente. O software detecta: medições de dimensão exatas, condição da superfície (riscos, print lines, holo scratches), condição dos cantos e bordas (fill, fray, angle), e centering preciso frente e verso.</p></div>
+  </div>
+  <div class="tag-step">
+    <div class="tag-step-left"><div class="tag-dot">04</div><div class="tag-line"></div></div>
+    <div class="tag-step-right"><strong>Scoring algorítmico</strong><p>O sistema aplica algoritmos a cada defeito identificado, gerando pontuações individuais por defeito, depois sumário por categoria (centering, corners, edges, surface, dimensions), e finalmente um score global de 100 a 1000 pontos que se traduz na nota 1–10.</p></div>
+  </div>
+  <div class="tag-step">
+    <div class="tag-step-left"><div class="tag-dot">05</div><div class="tag-line"></div></div>
+    <div class="tag-step-right"><strong>Verificação humana</strong><p>Uma equipe humana revisa os dados gerados pela IA, confirma a autenticidade da carta e aprova ou ajusta o resultado. Cartas com autenticidade questionável são devolvidas sem nota.</p></div>
+  </div>
+  <div class="tag-step">
+    <div class="tag-step-left"><div class="tag-dot">06</div><div class="tag-line"></div></div>
+    <div class="tag-step-right"><strong>Encapsulação e Slab Imaging</strong><p>A carta é lacrada no slab com a nota inscrita, foto HD frente e verso capturada para o DIG Report, e QR code gerado. Opcionalmente, vídeo 360° do slab é disponibilizado como add-on.</p></div>
+  </div>
+  <div class="tag-step">
+    <div class="tag-step-left"><div class="tag-dot">07</div></div>
+    <div class="tag-step-right"><strong>DIG Report ativo + Pop Report</strong><p>O cliente recebe acesso ao DIG Report completo (Digital Image & Grading Report) via QR code no slab. A carta é registrada no Pop Report público, catalogada por cronologia e ranqueada no Leaderboard.</p></div>
+  </div>
+</div>
+
+<h3 class="sub">O DIG Report — o diferencial da TAG</h3>
+<div class="card card-gold">
+  <p>Cada carta TAG graduada tem um DIG Report acessível por QR code no slab. É o relatório de grading mais transparente disponível no mercado. O DIG contém:</p>
+  <ul style="font-size:13px;color:var(--mid);padding-left:18px;line-height:1.8;margin-top:8px">
+    <li><strong>DINGS</strong> — Defects Identified of Notable Grade Significance: imagens de alta resolução dos defeitos específicos que causaram a nota</li>
+    <li><strong>Centering exato</strong> — ratio preciso frente e verso, não apenas a estimativa</li>
+    <li><strong>8 subnotas</strong> (no TAG Score): centering frente, centering verso, corners frente, corners verso, surface frente, surface verso, edges frente, edges verso</li>
+    <li><strong>Population</strong> — quantas cópias desta carta foram gradadas pela TAG e em quais notas</li>
+    <li><strong>Leaderboard</strong> — ranking desta cópia entre todas as TAG gradadas da mesma carta</li>
+    <li><strong>Chronology</strong> — quantas vezes esta carta foi gradada e quando; qual foi a primeira vez que essa nota foi atingida</li>
+    <li><strong>Card Vision</strong> — slider que alterna entre imagem real e visão computacional TAG (mostra defeitos realçados) com zoom até 800x</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h4 class="mini">📺 Vídeo — TAG Grading processo completo</h4>
+  <div class="video-grid">
+    <a class="video-card" href="https://www.youtube.com/watch?v=ZDiVxaBLWU4" target="_blank">
+      <div class="video-thumb"><span class="yt-label">YouTube</span><div class="play-btn">▶</div></div>
+      <div class="video-meta"><div class="vm-title">Grading Pokémon Cards with TAG — Complete Step-by-Step Guide</div><div class="vm-ch">YouTube · 2025 · Parte 1 de 3</div></div>
+    </a>
+  </div>
+</div>
+
+<div class="exercise">
+  <div class="ex-eyebrow">✏️ Exercício 7.1 — Estudar um DIG Report real</div>
+  <div class="ex-title">Analisar 3 DIG Reports no site da TAG</div>
+  <ol>
+    <li>Acesse <a href="https://taggrading.com/pages/sbdigs" target="_blank" style="color:var(--tag)">taggrading.com/pages/sbdigs</a> — exemplos de DIG Reports públicos da TAG.</li>
+    <li>Para cada report, identifique: qual foi o pior critério que determinou a nota? Quais DINGS estão listados?</li>
+    <li>Use o slider de Card Vision para comparar imagem real vs. visão computacional da TAG.</li>
+    <li>Anote o TAG Score de cada carta e veja onde ela se posiciona no Leaderboard.</li>
+    <li>Tente prever a nota de uma carta antes de abrir o report, depois compare com o resultado.</li>
+  </ol>
+  <div class="ex-note">🎯 Ler DIG Reports de cartas que já foram gradadas é o estudo mais direto possível do padrão TAG — você vê exatamente o que eles pontuaram e por quê.</div>
+</div>
+
+<div class="mod-nav-bottom">
+  <a class="btn-nav" onclick="goTo(5)">← Anterior</a>
+  <a class="btn-nav btn-nav-primary" onclick="goTo(7)">Próximo: TAG Critérios →</a>
+</div>
+</div>
+
+<!-- ═══ MÓDULO 7 — TAG CRITÉRIOS ═══ -->
+<div class="module" id="m7">
+<span class="mod-eyebrow">Módulo 08 — TAG Grading (Foco Principal)</span>
+<h1 class="mod-title">TAG — Critérios, Notas e Score</h1>
+<p class="mod-lead">A TAG tem um sistema de notas duplo: a escala 1–10 padrão de mercado, e o TAG Score de 100–1000 pontos que permite diferenciar dois PSA 10 — uma carta pode ser um TAG 10 de 952 pontos (o mais baixo) ou de 998 pontos. Esse nível de granularidade é único no mercado.</p>
+
+<h3 class="sub">O sistema de notas TAG</h3>
+<div class="tag-score-grid">
+  <div class="tag-score-card"><div class="ts-score">990+</div><div class="ts-grade">TAG 10 Pristine</div><div class="ts-name">Praticamente perfeito. Centering TCG 51/49. Apenas NHOD (Non-Human Observable Defects).</div></div>
+  <div class="tag-score-card"><div class="ts-score">950</div><div class="ts-grade">TAG 10 Gem Mint</div><div class="ts-name">950–989 pontos. Equivale ao PSA 10. O teto para a maioria das cartas.</div></div>
+  <div class="tag-score-card"><div class="ts-score">900</div><div class="ts-grade">TAG 9 Mint</div><div class="ts-name">900–949 pontos. Imperfeições mínimas apenas sob alta ampliação.</div></div>
+  <div class="tag-score-card"><div class="ts-score">850</div><div class="ts-grade">TAG 8 NM–Mt</div><div class="ts-name">850–899 pontos. Leve desgaste visível mas carta ainda excelente.</div></div>
+  <div class="tag-score-card"><div class="ts-score">750</div><div class="ts-grade">TAG 7 Near Mint</div><div class="ts-name">750–849 pontos. Desgaste moderado visível a olho nu.</div></div>
+  <div class="tag-score-card"><div class="ts-score">&lt;750</div><div class="ts-grade">TAG 1–6</div><div class="ts-name">Desgaste significativo. Raramente vale o custo de submissão.</div></div>
+</div>
+
+<div class="tip">💡 <strong>O valor do TAG Score:</strong> dois slabs TAG 10 da mesma carta podem ter preços muito diferentes no mercado. Um TAG 10 de score 985 é objetivamente mais valioso que um de score 952 — e isso está documentado e verificável por qualquer comprador. Isso cria um mercado mais transparente e favorece quem tem as cartas melhores.</div>
+
+<h3 class="sub">As 5 categorias de avaliação TAG</h3>
+<p>A TAG avalia 5 áreas (com subnotas front/back em 4 delas, totalizando 8 subnotas no TAG Score):</p>
+<table class="gtable">
+  <thead><tr><th>Categoria</th><th>O que mede</th><th>Métricas específicas TAG</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Centering</strong></td><td style="font-size:12px">Alinhamento frente e verso</td><td style="font-size:12px;color:var(--mid)">Ratio preciso medido por IA. Mais rigoroso que PSA para Pristine (51/49 TCG).</td></tr>
+    <tr><td><strong>Corners</strong></td><td style="font-size:12px">4 cantos, frente e verso</td><td style="font-size:12px;color:var(--mid)">Fill (preenchimento), Fray (fraying), Angle (sharpness do ângulo). Score individual por canto.</td></tr>
+    <tr><td><strong>Edges</strong></td><td style="font-size:12px">4 bordas, frente e verso</td><td style="font-size:12px;color:var(--mid)">Fill (integridade da borda), Fray (desgaste de fibra), Angle (alinhamento do corte).</td></tr>
+    <tr><td><strong>Surface</strong></td><td style="font-size:12px">Superfície frente e verso</td><td style="font-size:12px;color:var(--mid)">Scratches, print lines, holo wear, indentations, stains — detectados por Photometric Stereo Imaging.</td></tr>
+    <tr><td><strong>Dimensions</strong></td><td style="font-size:12px">Tamanho e corte</td><td style="font-size:12px;color:var(--mid)">A TAG mede as dimensões exatas da carta (2.5" × 3.5"). Cartas levemente cortadas de fábrica são penalizadas aqui.</td></tr>
+  </tbody>
+</table>
+
+<h3 class="sub">Os tiers de serviço TAG</h3>
+<div class="tag-tier-grid">
+  <div class="tag-tier">
+    <div class="tt-name">TAG V — Vault</div>
+    <div class="tt-price">Encapsulação sem nota</div>
+    <ul class="tt-items">
+      <li>Autenticação</li>
+      <li>Encapsulação em slab</li>
+      <li>Card ID no slab</li>
+      <li>Pop Report</li>
+      <li>DIG Report básico</li>
+      <li>Anti-counterfeit TAG foil</li>
+    </ul>
+  </div>
+  <div class="tag-tier">
+    <div class="tt-name">TAG X — Regular</div>
+    <div class="tt-price">~US$14–15 / carta</div>
+    <ul class="tt-items">
+      <li>Tudo do TAG V +</li>
+      <li>Nota 1–10 + 10 Pristine</li>
+      <li>DIG Report com DINGS</li>
+      <li>Centering metrics</li>
+      <li>Fill/Fray/Angle scores</li>
+      <li>Fotos HD do slab</li>
+    </ul>
+  </div>
+  <div class="tag-tier" style="border-color:var(--tag);background:var(--tag-lt)">
+    <div class="tt-name" style="color:var(--tag)">TAG S — Score ⭐</div>
+    <div class="tt-price" style="color:var(--tag)">Preço premium</div>
+    <ul class="tt-items">
+      <li>Tudo do TAG X +</li>
+      <li>TAG Score 100–1000 pts</li>
+      <li>DIG+ Report completo</li>
+      <li>8 subnotas detalhadas</li>
+      <li>Leaderboard ranking</li>
+      <li>Card Vision com zoom 800x</li>
+    </ul>
+  </div>
+</div>
+
+<div class="warn">⚠️ <strong>TAG Regular Grading com capacidade limitada:</strong> a partir de 2026, a TAG entrou em alta demanda. O serviço Regular pode estar com lista de espera. Verifique sempre em <a href="https://taggrading.com/pages/pricing" target="_blank" style="color:var(--tag)">taggrading.com/pages/pricing</a> antes de submeter.</div>
+
+<h3 class="sub">TAG vs. PSA — comparação direta para você decidir</h3>
+<table class="gtable">
+  <thead><tr><th>Critério</th><th>PSA</th><th style="color:var(--tag)">TAG</th></tr></thead>
+  <tbody>
+    <tr><td style="font-size:12px">Transparência</td><td style="font-size:12px;color:var(--mid)">Nota final apenas, sem explicação</td><td style="font-size:12px;color:var(--mid)">DIG Report com imagens dos defeitos e subnotas detalhadas</td></tr>
+    <tr><td style="font-size:12px">Consistência</td><td style="font-size:12px;color:var(--mid)">Humana — pode variar entre graders</td><td style="font-size:12px;color:var(--mid)">IA patente — matematicamente consistente</td></tr>
+    <tr><td style="font-size:12px">Diferenciação de 10s</td><td style="font-size:12px;color:var(--mid)">Impossível — todos os PSA 10 parecem iguais</td><td style="font-size:12px;color:var(--mid)">TAG Score + Leaderboard diferenciam cada 10</td></tr>
+    <tr><td style="font-size:12px">Liquidez no Brasil</td><td style="font-size:12px;color:var(--mid)">Alta — padrão reconhecido</td><td style="font-size:12px;color:var(--mid)">Em crescimento — chegando ao BR em 2025/26</td></tr>
+    <tr><td style="font-size:12px">Custo por carta</td><td style="font-size:12px;color:var(--mid)">US$19–30+ (Economy/Value)</td><td style="font-size:12px;color:var(--mid)">US$14–15 (Regular, bulk)</td></tr>
+    <tr><td style="font-size:12px">Turnaround</td><td style="font-size:12px;color:var(--mid)">Meses (backlog Value pausado jun/26)</td><td style="font-size:12px;color:var(--mid)">Variável; Priority disponível</td></tr>
+    <tr><td style="font-size:12px">Idiomas Pokémon</td><td style="font-size:12px;color:var(--mid)">EN, JP (e PT em casos selecionados)</td><td style="font-size:12px;color:var(--mid)">EN, JP, CN. PT ainda não confirmado oficialmente.</td></tr>
+  </tbody>
+</table>
+
+<div class="success">✅ <strong>Por que a TAG faz sentido para o mercado brasileiro:</strong> o DIG Report em si é uma ferramenta de marketing — você pode mostrar ao cliente exatamente onde estão os defeitos da carta e por que ela tirou aquela nota. Isso cria confiança e justifica comissão numa intermediação. A transparência da TAG é seu argumento de venda como consultor.</div>
+
+<div class="exercise">
+  <div class="ex-eyebrow">✏️ Exercício 8.1 — Projetar um TAG Score</div>
+  <div class="ex-title">Estimar o score TAG de 3 cartas suas antes de submeter</div>
+  <ol>
+    <li>Escolha 3 cartas que você considera candidatas a nota alta.</li>
+    <li>Para cada uma, avalie as 5 categorias TAG (Centering, Corners, Edges, Surface, Dimensions) usando as técnicas dos módulos anteriores.</li>
+    <li>Estime um score de 1–1000 para cada categoria (use a escala: 950+ = perfeito, 900–950 = muito bom, 850–900 = bom, 800–850 = razoável).</li>
+    <li>Some e faça uma média ponderada para estimar o score total e a nota final.</li>
+    <li>Registre sua previsão. Quando submeter à TAG, compare com o DIG Report real.</li>
+  </ol>
+  <div class="ex-note">🎯 Essa prática vai calibrar seu olho para o padrão específico da TAG — que é mais rigoroso que a PSA em alguns critérios (ex: Dimensions) e equivalente em outros.</div>
+</div>
+
+<div class="mod-nav-bottom">
+  <a class="btn-nav" onclick="goTo(6)">← Anterior</a>
+  <a class="btn-nav btn-nav-primary" onclick="goTo(8)">Próximo: Apps e Equipamentos →</a>
+</div>
+</div>
+
+<!-- ═══ MÓDULO 8 — APPS E EQUIPAMENTOS ═══ -->
+<div class="module" id="m8">
+<span class="mod-eyebrow">Módulo 09 — Arsenal Completo</span>
+<h1 class="mod-title">Apps, Ferramentas e Equipamentos</h1>
+<p class="mod-lead">Você já tem o microscópio digital — isso é um diferencial real sobre a maioria dos colecionadores. Agora vamos completar seu arsenal digital e físico para uma análise profissional de ponta a ponta.</p>
+
+<h3 class="sub">Apps digitais de pré-grading</h3>
+
+<div class="app-item">
+  <div class="app-icon">🤖</div>
+  <div class="app-info">
+    <div class="ai-name">CardMintAI</div>
+    <div class="ai-desc">IA treinada especificamente para Pokémon TCG. Analisa centering, corners, edges e surface. Detecta holo scratches. Suporta cartas vintage e japonesas. Alinhamento de 95% com resultados PSA reais segundo o próprio site. Ótimo para batch analysis de coleções inteiras.</div>
+    <div class="app-tags"><span class="atag-free atag">Grátis básico</span><span class="atag-pay atag">Premium</span><span class="atag-web atag">cardmintai.com</span></div>
+  </div>
+</div>
+
+<div class="app-item">
+  <div class="app-icon">📐</div>
+  <div class="app-info">
+    <div class="ai-name">Card Centering Calculator</div>
+    <div class="ai-desc">Especializado 100% em centering. Fotografa a carta e calcula o ratio automaticamente, mostrando a nota possível para PSA, BGS, SGC, CGC e TAG simultaneamente. Dev muito ativo e responsivo. Um dos apps mais bem avaliados da categoria na App Store.</div>
+    <div class="app-tags"><span class="atag">iOS</span><span class="atag-free atag">Freemium</span></div>
+  </div>
+</div>
+
+<div class="app-item">
+  <div class="app-icon">📊</div>
+  <div class="app-info">
+    <div class="ai-name">CardGrader.ai</div>
+    <div class="ai-desc">Grading por IA + calculadora de centering online gratuita + valores de mercado via eBay sold data em tempo real. Funciona direto no browser — bom para análise rápida sem instalar nada. Inclui calculadora de centering gratuita acessível em cardgrader.ai/centering-calculator.</div>
+    <div class="app-tags"><span class="atag-free atag">Grátis</span><span class="atag-web atag">Web</span></div>
+  </div>
+</div>
+
+<div class="app-item">
+  <div class="app-icon">🎮</div>
+  <div class="app-info">
+    <div class="ai-name">TCGrader</div>
+    <div class="ai-desc">App de grading por IA com marketplace integrado. Interface limpa. Funciona com todas as eras de Pokémon. Bom para análise rápida + comparação de preço antes de submeter. Sistema de créditos por análise.</div>
+    <div class="app-tags"><span class="atag">iOS + Android</span><span class="atag-pay atag">Créditos</span><span class="atag-web atag">tcgrader.com</span></div>
+  </div>
+</div>
+
+<div class="app-item">
+  <div class="app-icon">📈</div>
+  <div class="app-info">
+    <div class="ai-name">PriceCharting</div>
+    <div class="ai-desc">Não é app de grading — é análise de mercado essencial. Mostra preço histórico de cada carta raw vs. gradada (PSA 9, 10, BGS) ao longo do tempo com gráfico. Fundamental para calcular se vale a pena submeter antes de gastar com grading.</div>
+    <div class="app-tags"><span class="atag-free atag">Grátis</span><span class="atag-web atag">pricecharting.com</span></div>
+  </div>
+</div>
+
+<div class="app-item">
+  <div class="app-icon">🗂️</div>
+  <div class="app-info">
+    <div class="ai-name">PSA Pop Report / TAG Pop Report</div>
+    <div class="ai-desc">Ferramentas oficiais que mostram quantas cópias de cada carta existem em cada nota. PSA: psacard.com/pop. TAG: my.taggrading.com/pop-report. Essenciais para avaliar escassez de uma nota específica — poucos PSA 10 = carta muito mais valiosa e custosa.</div>
+    <div class="app-tags"><span class="atag-free atag">Grátis</span><span class="atag-web atag">Web</span></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+<h3 class="sub">Equipamentos físicos — kit completo</h3>
+
+<div class="equip-item">
+  <div class="equip-icon">🔬</div>
+  <div class="equip-info">
+    <div class="ei-name">Microscópio digital USB — você já tem ✓</div>
+    <div class="ei-desc">Sweet spot: 20x–60x para corners e edges. 100x+ para holo scratches e print lines. Com tela própria é mais prático. Use LED ajustável em ângulo para máxima revelação de defeitos. Para grading, 20–60x é o range que os profissionais usam — acima de 100x você vê coisas que os graders da PSA não veem.</div>
+    <div class="ei-price">Já adquirido ✓</div>
+  </div>
+</div>
+
+<div class="equip-item">
+  <div class="equip-icon">🔍</div>
+  <div class="equip-info">
+    <div class="ei-name">Loupe de joalheiro 10x com LED</div>
+    <div class="ei-desc">Para análise rápida sem montar o microscópio. Compacto e portátil — ideal para feiras, torneiros e visitas a colecionadores. 10x é o ponto ideal: revela whitening e scratches sem distorção. Procure modelos com LED embutido. Rongon e Jarlink têm bons modelos com medidor de escala embutido.</div>
+    <div class="ei-price">~R$40–80 · Amazon BR / Shopee</div>
+  </div>
+</div>
+
+<div class="equip-item">
+  <div class="equip-icon">🔦</div>
+  <div class="equip-info">
+    <div class="ei-name">Lanterna UV (365nm)</div>
+    <div class="ei-desc">Detecta restaurações de cartas, edge coloring (borda repintada), marcações e danos invisíveis à luz normal. Essencial para autenticar cartas vintage caras antes de comprar coleções. Use em ambiente completamente escuro com a carta a 10cm. Frequência 365nm é superior a 395nm para detecção de restaurações em cartas Pokémon.</div>
+    <div class="ei-price">~R$60–120 · Amazon / Mercado Livre</div>
+  </div>
+</div>
+
+<div class="equip-item">
+  <div class="equip-icon">📏</div>
+  <div class="equip-info">
+    <div class="ei-name">Régua de precisão milimétrica (aço)</div>
+    <div class="ei-desc">Para medir centering manualmente com precisão de 0.5mm. A combinação régua + app é o benchmark profissional — a régua detecta bordas irregulares que confundem os apps. Procure réguas de aço com escala gravada (não impressa) — as impressas desalinharm com o uso.</div>
+    <div class="ei-price">~R$20–35 · Papelaria / Amazon</div>
+  </div>
+</div>
+
+<div class="equip-item">
+  <div class="equip-icon">🛡️</div>
+  <div class="equip-info">
+    <div class="ei-name">Card Savers I — padrão de submissão PSA/TAG</div>
+    <div class="ei-desc">Sleeve semi-rígido que é o padrão exigido pela PSA e TAG para submissão. Protege a carta sem pressionar os cantos como um top loader faria. Compre em packs de 100. A TAG aceita semi-rigid shields similares — verifique sempre no help center antes de enviar.</div>
+    <div class="ei-price">~R$90–140 / 100 un · Importado ou intermediários BR</div>
+  </div>
+</div>
+
+<div class="equip-item">
+  <div class="equip-icon">🎨</div>
+  <div class="equip-info">
+    <div class="ei-name">Mat de trabalho — fundo preto/cinza escuro</div>
+    <div class="ei-desc">Superfície macia e neutra para analisar cartas sem risco de arranhões. Fundo escuro contrasta com whitening e fibras, tornando defeitos mais visíveis. Pode ser um mousepad de borracha grande ou mat específico de joalheria. A TAG usa mats brancos — mas para detecção de defeitos, fundo escuro é superior.</div>
+    <div class="ei-price">~R$30–70 · Amazon / Papelaria</div>
+  </div>
+</div>
+
+<div class="equip-item">
+  <div class="equip-icon">📸</div>
+  <div class="equip-info">
+    <div class="ei-name">Lightbox portátil com LED para fotografia</div>
+    <div class="ei-desc">Para fotografar cartas com iluminação profissional em consultorias remotas e anúncios de venda. Modelos dobráveis de 30–40cm com LED branco+quente custam pouco e eliminam sombras. Fundamental quando você precisar documentar cartas de clientes ou criar imagens de qualidade para venda premium.</div>
+    <div class="ei-price">~R$80–200 · Amazon / Shopee</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+<h3 class="sub">Protocolo completo de análise — checklist final</h3>
+<div class="card card-gold">
+  <p style="font-size:13px;font-weight:600;margin-bottom:12px">Sequência padrão para avaliação profissional de uma carta:</p>
+  <ol style="font-size:13px;color:var(--mid);padding-left:18px;line-height:1.8">
+    <li><strong>Visual a olho nu</strong> — avaliação geral rápida, identifica defeitos óbvios imediatamente</li>
+    <li><strong>Régua → Centering LR e TB</strong> — cálculo manual do ratio frente</li>
+    <li><strong>App (Card Centering Calculator)</strong> — confirma centering e mostra nota estimada de cada empresa</li>
+    <li><strong>Loupe 10x → 4 cantos</strong> — inspeciona whitening, rounding, fraying em cada canto</li>
+    <li><strong>Microscópio 30–50x → 4 bordas frente</strong> — varredura completa de edge whitening e chipping</li>
+    <li><strong>Microscópio 30–50x → 4 bordas verso</strong> — repetir no verso (costuma ter condição diferente)</li>
+    <li><strong>Microscópio + luz rasante → Surface frente</strong> — 4 ângulos de luz para holo e print lines</li>
+    <li><strong>Microscópio + luz rasante → Surface verso</strong> — verificar scratches, stains, indentations</li>
+    <li><strong>Luz UV</strong> — se for carta vintage ou suspeita de restauração</li>
+    <li><strong>CardMintAI</strong> — segunda opinião via IA para confirmar sua análise</li>
+    <li><strong>PriceCharting</strong> — verifica se o ROI justifica o custo de submissão</li>
+    <li><strong>Decisão</strong> — submeter? Qual empresa? Qual tier?</li>
+  </ol>
+</div>
+
+<div class="exercise">
+  <div class="ex-eyebrow">✏️ Exercício Final 9.1 — Protocolo completo</div>
+  <div class="ex-title">Avalie a carta mais valiosa da sua coleção do início ao fim</div>
+  <ol>
+    <li>Escolha a carta que você acredita ter maior potencial de nota alta.</li>
+    <li>Siga o protocolo de 12 passos acima, documentando cada etapa.</li>
+    <li>Preencha uma ficha: Centering LR/TB | Cantos 1/2/3/4 | Bordas 4x | Surface frente | Surface verso | Nota prevista | Confiança 1–10 | Decisão de submissão.</li>
+    <li>Volte às 5 cartas do Exercício 1.1 e reavalie todas com o protocolo completo.</li>
+    <li>Compare com suas avaliações iniciais do módulo 1 — essa é a sua métrica de evolução.</li>
+  </ol>
+  <div class="ex-note">🎯 Quando você completar este protocolo 20 vezes, vai ter velocidade e consistência profissional. É aí que começa a consultoria real.</div>
+</div>
+
+<div class="card card-gold" style="margin-top:32px">
+  <h4 class="mini">🎓 Curso concluído!</h4>
+  <p style="font-size:13px;color:var(--mid)">Você agora tem o conhecimento técnico para avaliar cartas com padrão profissional, entende profundamente o sistema da TAG, sabe quais ferramentas usar e tem um protocolo de análise de ponta a ponta. O próximo passo é prática: 20 análises completas com documentação é o threshold para confiança de consultor.</p>
+</div>
+
+<div class="mod-nav-bottom">
+  <a class="btn-nav" onclick="goTo(7)">← Anterior</a>
+  <a class="btn-nav btn-nav-done" onclick="goTo(0)">↩ Recomeçar do início</a>
+</div>
+</div>
+
+</main>
+
+<div class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</div>
+
+<script>
+var cur = 0;
+var total = 9;
+var visited = new Set([0]);
+
+function goTo(n){
+  document.getElementById('m'+cur).classList.remove('active');
+  document.getElementById('ni'+cur).classList.remove('active');
+  if(visited.has(cur)) document.getElementById('ni'+cur).classList.add('done');
+  cur = n;
+  visited.add(n);
+  document.getElementById('m'+cur).classList.add('active');
+  document.getElementById('ni'+cur).classList.add('active');
+  document.getElementById('ni'+cur).classList.remove('done');
+  var pct = Math.round((visited.size / total) * 100);
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progText').textContent = visited.size + ' de ' + total + ' módulos';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function simUpdate(){
+  var l = parseInt(document.getElementById('slL').value);
+  var r = parseInt(document.getElementById('slR').value);
+  var t = parseInt(document.getElementById('slT').value);
+  var b = parseInt(document.getElementById('slB').value);
+  document.getElementById('vL').textContent = l;
+  document.getElementById('vR').textContent = r;
+  document.getElementById('vT').textContent = t;
+  document.getElementById('vB').textContent = b;
+  var inner = document.getElementById('simInner');
+  inner.style.left = l + 'px';
+  inner.style.right = r + 'px';
+  inner.style.top = t + 'px';
+  inner.style.bottom = b + 'px';
+  var lrMax = Math.max(l,r), lrMin = Math.min(l,r);
+  var tbMax = Math.max(t,b), tbMin = Math.min(t,b);
+  var lr = Math.round(lrMax/(lrMax+lrMin)*100);
+  var tb = Math.round(tbMax/(tbMax+tbMin)*100);
+  document.getElementById('simRatio').textContent = 'LR: '+lr+'/'+(100-lr)+' · TB: '+tb+'/'+(100-tb);
+  var worst = Math.max(lr,tb);
+  var g, c;
+  if(worst<=51){g='TAG 10 Pristine · PSA 10';c='#1b5e20'}
+  else if(worst<=55){g='TAG 10 Gem Mint · PSA 10';c='#1565c0'}
+  else if(worst<=60){g='PSA 9 · TAG 9';c='#0d47a1'}
+  else if(worst<=65){g='PSA 8 · TAG 8';c='#e65100'}
+  else if(worst<=70){g='PSA 7 · TAG 7';c='#880e4f'}
+  else{g='PSA 6 ou menos';c='#5f5e5a'}
+  var el = document.getElementById('simGrade');
+  el.textContent = 'Estimativa: ' + g;
+  el.style.color = c;
+}
+
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+window.addEventListener('scroll', function(){
+  var st = document.getElementById('scrollTop');
+  if(window.scrollY > 300) st.style.opacity = '1';
+  else st.style.opacity = '0';
+});
+
+simUpdate();
+</script>
+</body>
+</html>
